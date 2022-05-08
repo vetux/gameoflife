@@ -85,6 +85,16 @@ private:
                              window->getRenderTarget(graphicsBackend).getSize().convert<float>());
     }
 
+    std::vector<Vec2i> getBrushInfluence(Vec2i position) {
+        std::vector<Vec2i> ret;
+        for (int x = position.x - (int) brushSize; x <= position.x + (int) brushSize; x++) {
+            for (int y = position.y - (int) brushSize; y <= position.y + (int) brushSize; y++) {
+                ret.emplace_back(Vec2i(x, y));
+            }
+        }
+        return ret;
+    }
+
     void drawTile(RenderTarget &target, Vec2i pos, ColorRGBA color, bool fillSpacing) {
         Vec2f screenPos = worldToScreen(pos, target.getSize().convert<float>());
 
@@ -104,17 +114,25 @@ private:
         ren2d.renderBegin(target, false);
 
         auto mpos = getMousePosition();
+        auto influence = getBrushInfluence(mpos);
 
-        Vec2f screenPos = worldToScreen(mpos, target.getSize().convert<float>());
+        for (auto &pos: influence) {
+            Vec2f screenPos = worldToScreen(pos, target.getSize().convert<float>());
 
-        auto size = cellSize * viewScale;
+            auto size = cellSize * viewScale;
 
-        screenPos += Vec2f(cellSize, cellSize) / 4 * viewScale;
-        size /= 2;
+            screenPos += Vec2f(cellSize, cellSize) / 4 * viewScale;
+            size /= 2;
 
-        Rectf rect(screenPos, {size, size});
+            Rectf rect(screenPos, {size, size});
 
-        ren2d.draw(rect, ColorRGBA::green());
+            ColorRGBA color;
+            if (window->getInput().getKeyboard().getKey(xengine::KEY_LCTRL))
+                color = ColorRGBA::red();
+            else
+                color = ColorRGBA::green();
+            ren2d.draw(rect, color);
+        }
 
         ren2d.renderPresent();
     }
@@ -255,6 +273,13 @@ private:
             mode = SHADE_SCALE_NEIGHBOUR;
         }
 
+        if (keyboard.getKeyDown(KEY_R)) {
+            if (brushSize > 0)
+                brushSize--;
+        } else if (keyboard.getKeyDown(KEY_T)) {
+            brushSize++;
+        }
+
         if (keyboard.getKey(KEY_Q))
             tickDuration -= 0.2f * deltaTime;
         else if (keyboard.getKey(KEY_E))
@@ -271,10 +296,19 @@ private:
             viewPos += mouse.positionDelta.convert<float>() * deltaTime * panSpeed;
         }
 
-        if (mouse.wheelDelta > 0.1 || mouse.wheelDelta < -0.1)
-            viewScale += mouse.wheelDelta * deltaTime * zoomSpeed * viewScale;
-        if (viewScale < 0.01)
-            viewScale = 0.01;
+        if (keyboard.getKey(xengine::KEY_LSHIFT)) {
+            if (mouse.wheelDelta > 0) {
+                brushSize++;
+            } else if (mouse.wheelDelta < 0) {
+                if (brushSize > 0)
+                    brushSize--;
+            }
+        } else {
+            if (mouse.wheelDelta > 0.1 || mouse.wheelDelta < -0.1)
+                viewScale += mouse.wheelDelta * deltaTime * zoomSpeed * viewScale;
+            if (viewScale < 0.01)
+                viewScale = 0.01;
+        }
 
         if (mouse.getButton(xengine::LEFT)) {
             // Block the grid from ticking if left mouse button is held down or pressed
@@ -293,11 +327,20 @@ private:
             // Set cell if left mouse button was pressed or if the mouse was moved while the left mouse button was held down
             if (mouse.getButtonDown(xengine::LEFT) || updateGrid) {
                 currentMousePosition = getMousePosition();
-                // Set cells to alive if the user is pressing left button and dragging the mouse
-                if (updateGrid)
-                    grid.setCell(currentMousePosition, true);
-                else
-                    grid.setCell(currentMousePosition, !grid.getCell(currentMousePosition));
+
+                auto mpos = getMousePosition();
+                auto influence = getBrushInfluence(mpos);
+
+                for (auto &pos: influence) {
+                    if (keyboard.getKey(xengine::KEY_LCTRL)) {
+                        grid.setCell(pos, false);
+                    } else if (updateGrid) {
+                        // Set cells to alive if the user is pressing left button and dragging the mouse
+                        grid.setCell(pos, true);
+                    } else {
+                        grid.setCell(pos, !grid.getCell(pos));
+                    }
+                }
             }
         } else {
             blockTick = false;
@@ -333,6 +376,8 @@ private:
     Vec2i currentMousePosition;
 
     ShadeMode mode = SHADE_DEFAULT;
+
+    uint brushSize = 0;
 };
 
 #endif //GAMEOFLIFE_GAMEOFLIFE_HPP
