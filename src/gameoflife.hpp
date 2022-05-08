@@ -224,7 +224,7 @@ private:
         }
 
         if (mouse.wheelDelta > 0.1 || mouse.wheelDelta < -0.1)
-            viewScale += mouse.wheelDelta * deltaTime * zoomSpeed;
+            viewScale += mouse.wheelDelta * deltaTime * zoomSpeed * viewScale;
         if (viewScale < 0.01)
             viewScale = 0.01;
 
