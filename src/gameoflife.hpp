@@ -113,8 +113,17 @@ private:
     void drawGrid(RenderTarget &target) {
         ren2d.renderBegin(target, false);
 
+        Vec2i min = screenToWorld({0, 0}, target.getSize().convert<float>());
+        Vec2i max = screenToWorld(target.getSize().convert<float>(), target.getSize().convert<float>());
+
         for (auto &x: grid.cells) {
             for (auto &y: x.second) {
+                if (x.first < min.x
+                    || x.first > max.x
+                    || y < min.y
+                    || y > max.y)
+                    continue;
+
                 Vec2i pos(x.first, y);
 
                 ColorRGBA color;
