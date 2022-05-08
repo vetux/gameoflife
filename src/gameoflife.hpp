@@ -135,6 +135,8 @@ private:
                                           30);
         auto btext = textRenderer->render("Game Paused", 30);
 
+        auto ttext = textRenderer->render("Tick Duration: " + std::to_string(tickDuration) + "s", 30);
+
         ren2d.renderBegin(target, false);
 
         static const float padding = 10.0f;
@@ -149,12 +151,22 @@ private:
                                    + padding},
                          mtext.getTexture().getAttributes().size.convert<float>()),
                    ColorRGBA::white());
+        ren2d.draw(ttext,
+                   Rectf({padding, padding
+                                   + deltaText.getTexture().getAttributes().size.y
+                                   + padding
+                                   + mtext.getTexture().getAttributes().size.y
+                                   + padding},
+                         ttext.getTexture().getAttributes().size.convert<float>()),
+                   ColorRGBA::white());
 
         ren2d.draw(text,
                    Rectf({padding, padding
                                    + deltaText.getTexture().getAttributes().size.y
                                    + padding
                                    + mtext.getTexture().getAttributes().size.y
+                                   + padding
+                                   + ttext.getTexture().getAttributes().size.y
                                    + padding},
                          text.getTexture().getAttributes().size.convert<float>()),
                    ColorRGBA::white());
@@ -174,16 +186,20 @@ private:
         auto &input = window->getInput();
         auto &keyboard = input.getKeyboard();
 
-        if (keyboard.getKey(xengine::KEY_LEFT)) {
+        if (keyboard.getKey(xengine::KEY_LEFT)
+            || keyboard.getKey(KEY_A)) {
             viewPos.x -= deltaTime * panSpeed;
         }
-        if (keyboard.getKey(xengine::KEY_RIGHT)) {
+        if (keyboard.getKey(xengine::KEY_RIGHT)
+            || keyboard.getKey(KEY_D)) {
             viewPos.x += deltaTime * panSpeed;
         }
-        if (keyboard.getKey(xengine::KEY_UP)) {
+        if (keyboard.getKey(xengine::KEY_UP)
+            || keyboard.getKey(KEY_W)) {
             viewPos.y -= deltaTime * panSpeed;
         }
-        if (keyboard.getKey(xengine::KEY_DOWN)) {
+        if (keyboard.getKey(xengine::KEY_DOWN)
+            || keyboard.getKey(xengine::KEY_S)) {
             viewPos.y += deltaTime * panSpeed;
         }
 
@@ -191,7 +207,21 @@ private:
             keyboardBlockToggle = !keyboardBlockToggle;
         }
 
+        if (keyboard.getKey(KEY_Q))
+            tickDuration -= 0.5f * deltaTime;
+        else if (keyboard.getKey(KEY_E))
+            tickDuration += 0.5f * deltaTime;
+
+        if (tickDuration <= 0.01)
+            tickDuration = 0.01;
+        else if (tickDuration > 5)
+            tickDuration = 5;
+
         auto &mouse = input.getMouse();
+
+        if (mouse.getButton(xengine::RIGHT)) {
+            viewPos += mouse.positionDelta.convert<float>() * deltaTime * panSpeed;
+        }
 
         if (mouse.wheelDelta > 0.1 || mouse.wheelDelta < -0.1)
             viewScale += mouse.wheelDelta * deltaTime * zoomSpeed;
@@ -201,6 +231,7 @@ private:
         if (mouse.getButton(xengine::LEFT)) {
             // Block the grid from ticking if left mouse button is held down or pressed
             blockTick = true;
+            tickAccum = 0;
 
             // Check if mouse position has changed while left button is held down
             bool updateGrid = false;
