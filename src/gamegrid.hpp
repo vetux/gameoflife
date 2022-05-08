@@ -35,6 +35,12 @@ struct GameGrid {
 
     std::map<T, std::set<T>> cells;
 
+    int minSurvive = 2;
+    int maxSurvive = 3;
+
+    int minRevive = 3;
+    int maxRevive = 3;
+
     void setCell(Position pos, bool alive) {
         if (alive)
             cells[pos.x].insert(pos.y);
@@ -50,8 +56,8 @@ struct GameGrid {
         return {
                 {pos.x - 1, pos.y},
                 {pos.x + 1, pos.y},
-                {pos.x, pos.y - 1},
-                {pos.x, pos.y + 1},
+                {pos.x,     pos.y - 1},
+                {pos.x,     pos.y + 1},
                 {pos.x - 1, pos.y - 1},
                 {pos.x + 1, pos.y + 1},
                 {pos.x - 1, pos.y + 1},
@@ -74,7 +80,7 @@ struct GameGrid {
             for (auto &y: x.second) {
                 Position pos(x.first, y);
                 auto n = getNeighbours(pos);
-                if (n >= 2 && n <= 3) {
+                if (n >= minSurvive && n <= maxSurvive) {
                     aliveCells.emplace_back(pos);
                 }
 
@@ -83,7 +89,7 @@ struct GameGrid {
                 for (auto &p: neighbours) {
                     if (!getCell(p)) {
                         auto nc = getNeighbours(p);
-                        if (nc == 3) {
+                        if (nc >= minRevive && nc <= maxRevive) {
                             // Check if cell was already added to aliveCells by a previous iteration
                             bool exists = false;
                             for (auto &cell: aliveCells) {
