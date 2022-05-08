@@ -30,6 +30,11 @@ using namespace xengine;
 
 class GameOfLife : public Application {
 public:
+    enum ShadeMode {
+        SHADE_DEFAULT,
+        SHADE_SCALE_NEIGHBOUR, // Scale the color intensity with the number of neighbours of the cell,
+    };
+
     GameOfLife(int argc, char *argv[])
             : Application(argc, argv), ren2d(*renderDevice) {
         window->setTitle("Game Of Life");
@@ -111,7 +116,24 @@ private:
         for (auto &x: grid.cells) {
             for (auto &y: x.second) {
                 Vec2i pos(x.first, y);
-                drawTile(target, pos, ColorRGBA::white(), false);
+
+                ColorRGBA color;
+
+                switch (mode) {
+                    case SHADE_SCALE_NEIGHBOUR: {
+                        float scale = 0.2f;
+                        auto n = grid.getNeighbours(pos);
+                        if (n > 0)
+                            scale = grid.getNeighbours(pos) / 10.0f;
+                        color = ColorRGBA::white(scale);
+                    }
+                        break;
+                    default:
+                        color = ColorRGBA::white();
+                        break;
+                }
+
+                drawTile(target, pos, color, false);
             }
         }
 
@@ -207,6 +229,12 @@ private:
             keyboardBlockToggle = !keyboardBlockToggle;
         }
 
+        if (keyboard.getKeyDown(KEY_1)) {
+            mode = SHADE_DEFAULT;
+        } else if (keyboard.getKeyDown(KEY_2)) {
+            mode = SHADE_SCALE_NEIGHBOUR;
+        }
+
         if (keyboard.getKey(KEY_Q))
             tickDuration -= 0.2f * deltaTime;
         else if (keyboard.getKey(KEY_E))
@@ -283,6 +311,8 @@ private:
     bool keyboardBlockToggle = false;
 
     Vec2i currentMousePosition;
+
+    ShadeMode mode = SHADE_DEFAULT;
 };
 
 #endif //GAMEOFLIFE_GAMEOFLIFE_HPP
