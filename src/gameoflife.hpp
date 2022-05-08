@@ -208,12 +208,12 @@ private:
         }
 
         if (keyboard.getKey(KEY_Q))
-            tickDuration -= 0.5f * deltaTime;
+            tickDuration -= 0.2f * deltaTime;
         else if (keyboard.getKey(KEY_E))
-            tickDuration += 0.5f * deltaTime;
+            tickDuration += 0.2f * deltaTime;
 
-        if (tickDuration <= 0.01)
-            tickDuration = 0.01;
+        if (tickDuration <= 0)
+            tickDuration = 0.000001;
         else if (tickDuration > 5)
             tickDuration = 5;
 
