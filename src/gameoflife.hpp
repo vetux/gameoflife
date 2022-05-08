@@ -61,8 +61,8 @@ protected:
 
         renderDevice->getRenderer().renderClear(target, ColorRGBA::black(), 1);
 
-        drawCursor(target);
         drawGrid(target);
+        drawCursor(target);
         drawGui(target, deltaTime);
 
         Application::update(deltaTime);
@@ -105,7 +105,16 @@ private:
 
         auto mpos = getMousePosition();
 
-        drawTile(target, mpos, ColorRGBA::green(), true);
+        Vec2f screenPos = worldToScreen(mpos, target.getSize().convert<float>());
+
+        auto size = cellSize * viewScale;
+
+        screenPos += Vec2f(cellSize, cellSize) / 4 * viewScale;
+        size /= 2;
+
+        Rectf rect(screenPos, {size, size});
+
+        ren2d.draw(rect, ColorRGBA::green());
 
         ren2d.renderPresent();
     }
@@ -127,6 +136,7 @@ private:
                 Vec2i pos(x.first, y);
 
                 ColorRGBA color;
+                bool fill = false;
 
                 switch (mode) {
                     case SHADE_SCALE_NEIGHBOUR: {
@@ -135,6 +145,7 @@ private:
                         if (n > 0)
                             scale = grid.getNeighbours(pos) / 10.0f;
                         color = ColorRGBA::white(scale);
+                        fill = true;
                     }
                         break;
                     default:
@@ -142,7 +153,7 @@ private:
                         break;
                 }
 
-                drawTile(target, pos, color, false);
+                drawTile(target, pos, color, fill);
             }
         }
 
