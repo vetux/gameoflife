@@ -100,7 +100,7 @@ private:
 
         auto mpos = getMousePosition();
 
-        drawTile(target, mpos, ColorRGBA::green(0.7), true);
+        drawTile(target, mpos, ColorRGBA::green(), true);
 
         ren2d.renderPresent();
     }
@@ -133,6 +133,7 @@ private:
         auto mtext = textRenderer->render("Position: " + std::to_string(mpos.x) + " " + std::to_string(mpos.y)
                                           + "\nZoom: " + std::to_string(viewScale),
                                           30);
+        auto btext = textRenderer->render("Game Paused", 30);
 
         ren2d.renderBegin(target, false);
 
@@ -157,6 +158,14 @@ private:
                                    + padding},
                          text.getTexture().getAttributes().size.convert<float>()),
                    ColorRGBA::white());
+
+        if (blockTick) {
+            ren2d.draw(btext,
+                       Rectf({(target.getSize().convert<float>() / 2.0f) -
+                              (btext.getTexture().getAttributes().size.convert<float>() / 2.0f)},
+                             btext.getTexture().getAttributes().size.convert<float>()),
+                       ColorRGBA::white());
+        }
 
         ren2d.renderPresent();
     }
