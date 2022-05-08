@@ -245,7 +245,11 @@ private:
             // Set cell if left mouse button was pressed or if the mouse was moved while the left mouse button was held down
             if (mouse.getButtonDown(xengine::LEFT) || updateGrid) {
                 currentMousePosition = getMousePosition();
-                grid.setCell(currentMousePosition, !grid.getCell(currentMousePosition));
+                // Set cells to alive if the user is pressing left button and dragging the mouse
+                if (updateGrid)
+                    grid.setCell(currentMousePosition, true);
+                else
+                    grid.setCell(currentMousePosition, !grid.getCell(currentMousePosition));
             }
         } else {
             blockTick = false;
