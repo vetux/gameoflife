@@ -45,7 +45,7 @@ protected:
     void update(float deltaTime) override {
         updateInput(deltaTime);
 
-        if (tickAccum + deltaTime >= tickDuration) {
+        if (tickAccum + deltaTime >= tickDuration && !blockTick) {
             tickAccum = 0;
             grid = grid.stepTime();
         } else {
@@ -75,7 +75,7 @@ private:
     }
 
     Vec2i getMousePosition() {
-        return screenToWorld(window->getInput().getMice().at(0).position.convert<float>()
+        return screenToWorld(window->getInput().getMouse().position.convert<float>()
                              - Vec2f(cellSize + cellSpacing, cellSize + cellSpacing) * viewScale / 2,
                              window->getRenderTarget(graphicsBackend).getSize().convert<float>());
     }
@@ -163,7 +163,7 @@ private:
 
     void updateInput(float deltaTime) {
         auto &input = window->getInput();
-        auto &keyboard = input.getKeyboards().at(0);
+        auto &keyboard = input.getKeyboard();
 
         if (keyboard.getKey(xengine::KEY_LEFT)) {
             viewPos.x -= deltaTime * panSpeed;
@@ -178,16 +178,33 @@ private:
             viewPos.y += deltaTime * panSpeed;
         }
 
-        auto wheelDelta = input.getMice().at(0).wheelDelta;
-        if (wheelDelta > 0.1 || wheelDelta < -0.1)
-            viewScale += wheelDelta * deltaTime * zoomSpeed;
+        auto &mouse = input.getMouse();
+
+        if (mouse.wheelDelta > 0.1 || mouse.wheelDelta < -0.1)
+            viewScale += mouse.wheelDelta * deltaTime * zoomSpeed;
         if (viewScale < 0.01)
             viewScale = 0.01;
 
-        auto &mouse = input.getMice().at(0);
         if (mouse.getButton(xengine::LEFT)) {
-            auto mpos = getMousePosition();
-            grid.setCell(mpos, !grid.getCell(mpos));
+            // Block the grid from ticking if left mouse button is held down or pressed
+            blockTick = true;
+
+            // Check if mouse position has changed while left button is held down
+            bool updateGrid = false;
+            if (mouse.positionDelta.x != 0 || mouse.positionDelta.y != 0) {
+                auto mpos = getMousePosition();
+                if (currentMousePosition != mpos) {
+                    updateGrid = true;
+                }
+            }
+
+            // Set cell if left mouse button was pressed or if the mouse was moved while the left mouse button was held down
+            if (mouse.getButtonDown(xengine::LEFT) || updateGrid) {
+                currentMousePosition = getMousePosition();
+                grid.setCell(currentMousePosition, !grid.getCell(currentMousePosition));
+            }
+        } else {
+            blockTick = false;
         }
     }
 
@@ -209,6 +226,10 @@ private:
 
     float panSpeed = 10.0f;
     float zoomSpeed = 10.0f;
+
+    bool blockTick = false;
+
+    Vec2i currentMousePosition;
 };
 
 #endif //GAMEOFLIFE_GAMEOFLIFE_HPP
