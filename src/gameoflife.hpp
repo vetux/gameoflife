@@ -178,6 +178,10 @@ private:
             viewPos.y += deltaTime * panSpeed;
         }
 
+        if (keyboard.getKeyDown(xengine::KEY_SPACE)) {
+            keyboardBlockToggle = !keyboardBlockToggle;
+        }
+
         auto &mouse = input.getMouse();
 
         if (mouse.wheelDelta > 0.1 || mouse.wheelDelta < -0.1)
@@ -206,6 +210,9 @@ private:
         } else {
             blockTick = false;
         }
+
+        if (keyboardBlockToggle)
+            blockTick = true;
     }
 
     Renderer2D ren2d;
@@ -228,6 +235,8 @@ private:
     float zoomSpeed = 10.0f;
 
     bool blockTick = false;
+
+    bool keyboardBlockToggle = false;
 
     Vec2i currentMousePosition;
 };
