@@ -30,8 +30,13 @@ using namespace xengine;
 
 class GameOfLife : public Application {
 public:
+    enum ShadeMode {
+        SHADE_DEFAULT,
+        SHADE_SCALE_NEIGHBOUR, // Scale the color intensity with the number of neighbours of the cell,
+    };
+
     GameOfLife(int argc, char *argv[])
-            : Application(argc, argv), ren2d(*renderDevice) {
+            : Application(argc, argv), ren2d(*renderDevice), gridRenderer2d(*renderDevice) {
         window->setTitle("Game Of Life");
     }
 
@@ -106,6 +111,21 @@ private:
         ren2d.drawInstanced(offsets, {size, size}, color);
     }
 
+    void drawTile(RenderTarget &target, Vec2i pos, ColorRGBA color, bool fillSpacing) {
+        Vec2f screenPos = worldToScreen(pos, target.getSize().convert<float>());
+
+        auto size = cellSize * viewScale;
+
+        if (fillSpacing) {
+            screenPos -= Vec2f(cellSpacing, cellSpacing) / 2 * viewScale;
+            size += cellSpacing * viewScale;
+        }
+
+        Rectf rect(screenPos, {size, size});
+
+        ren2d.draw(rect, color);
+    }
+
     void drawCursor(RenderTarget &target) {
         ren2d.renderBegin(target, false);
 
@@ -134,7 +154,7 @@ private:
     }
 
     void drawGrid(RenderTarget &target) {
-        ren2d.renderBegin(target, false);
+        gridRenderer2d.renderBegin(target, false);
 
         Vec2i min = screenToWorld({0, 0}, target.getSize().convert<float>());
         Vec2i max = screenToWorld(target.getSize().convert<float>(), target.getSize().convert<float>());
@@ -151,9 +171,23 @@ private:
             }
         }
 
-        drawTiles(target, positions, ColorRGBA::white());
+        switch (mode) {
+            case SHADE_SCALE_NEIGHBOUR:
+                for (auto &p: positions) {
+                    auto n = grid.getNeighbours(p);
+                    float scale = 0.2f;
+                    if (n > 0)
+                        scale = (float) n / 10.0f;
+                    drawTile(target, p, ColorRGBA::white(scale), true);
+                }
+                break;
+            case SHADE_DEFAULT:
+            default:
+                drawTiles(target, positions, ColorRGBA::white());
+                break;
+        }
 
-        ren2d.renderPresent();
+        gridRenderer2d.renderPresent();
     }
 
     void drawGui(RenderTarget &target, float deltaTime) {
@@ -252,6 +286,12 @@ private:
             brushSize++;
         }
 
+        if (keyboard.getKeyDown(KEY_1)) {
+            mode = SHADE_DEFAULT;
+        } else if (keyboard.getKeyDown(KEY_2)) {
+            mode = SHADE_SCALE_NEIGHBOUR;
+        }
+
         if (keyboard.getKey(KEY_Q))
             tickDuration -= 0.2f * deltaTime;
         else if (keyboard.getKey(KEY_E))
@@ -277,7 +317,7 @@ private:
             }
         } else {
             if (mouse.wheelDelta > 0.1 || mouse.wheelDelta < -0.1)
-                viewScale += mouse.wheelDelta * deltaTime * zoomSpeed * viewScale;
+                viewScale += mouse.wheelDelta * zoomSpeed * viewScale;
             if (viewScale < 0.01)
                 viewScale = 0.01;
         }
@@ -323,6 +363,7 @@ private:
     }
 
     Renderer2D ren2d;
+    Renderer2D gridRenderer2d;
 
     std::unique_ptr<Font> font;
     std::unique_ptr<TextRenderer> textRenderer;
@@ -339,7 +380,7 @@ private:
     float tickDuration = 1.0f;
 
     float panSpeed = 10.0f;
-    float zoomSpeed = 10.0f;
+    float zoomSpeed = 0.1f;
 
     bool blockTick = false;
 
@@ -348,6 +389,8 @@ private:
     Vec2i currentMousePosition;
 
     uint brushSize = 0;
+
+    ShadeMode mode = SHADE_DEFAULT;
 };
 
 #endif //GAMEOFLIFE_GAMEOFLIFE_HPP
