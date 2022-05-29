@@ -33,7 +33,7 @@ template<typename T>
 struct GameGrid {
     typedef xengine::Vector2<T> Position;
 
-    std::unordered_map<T, std::set<T>> cells;
+    std::unordered_map<T, std::unordered_set<T>> cells;
 
     int minSurvive = 2;
     int maxSurvive = 3;
@@ -57,7 +57,7 @@ struct GameGrid {
         return false;
     }
 
-    std::vector<Position> getNeighbourPositions(Position pos) {
+    std::vector<Position> getNeighbourPositions(Position pos) const {
         return {
                 {pos.x - 1, pos.y},
                 {pos.x + 1, pos.y},
@@ -70,7 +70,7 @@ struct GameGrid {
         };
     }
 
-    int getNeighbours(Position pos) {
+    int getNeighbours(Position pos) const {
         int ret = 0;
         auto positions = getNeighbourPositions(pos);
         for (auto &p: positions)
@@ -81,6 +81,7 @@ struct GameGrid {
 
     GameGrid<T> stepTime() {
         std::vector<Position> aliveCells;
+
         for (auto &x: cells) {
             for (auto &y: x.second) {
                 Position pos(x.first, y);
