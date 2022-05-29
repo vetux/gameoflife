@@ -48,8 +48,13 @@ struct GameGrid {
             cells[pos.x].erase(pos.y);
     }
 
-    bool getCell(Position pos) {
-        return cells[pos.x].find(pos.y) != cells[pos.x].end();
+    bool getCell(Position pos) const {
+        auto it = cells.find(pos.x);
+        if (it != cells.end()) {
+            auto rIt = it->second.find(pos.y);
+            return rIt != it->second.end();
+        }
+        return false;
     }
 
     std::vector<Position> getNeighbourPositions(Position pos) {
@@ -90,16 +95,7 @@ struct GameGrid {
                     if (!getCell(p)) {
                         auto nc = getNeighbours(p);
                         if (nc >= minRevive && nc <= maxRevive) {
-                            // Check if cell was already added to aliveCells by a previous iteration
-                            bool exists = false;
-                            for (auto &cell: aliveCells) {
-                                if (cell == p) {
-                                    exists = true;
-                                    break;
-                                }
-                            }
-                            if (!exists)
-                                aliveCells.emplace_back(p);
+                            aliveCells.emplace_back(p);
                         }
                     }
                 }

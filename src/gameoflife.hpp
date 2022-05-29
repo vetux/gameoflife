@@ -49,7 +49,10 @@ protected:
             tickAccum = 0;
             grid = grid.stepTime();
         } else {
-            tickAccum += deltaTime;
+            if (blockTick)
+                tickAccum = 0;
+            else
+                tickAccum += deltaTime;
         }
 
         auto &target = window->getRenderTarget();
