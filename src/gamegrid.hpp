@@ -33,7 +33,7 @@ template<typename T>
 struct GameGrid {
     typedef xengine::Vector2<T> Position;
 
-    std::map<T, std::set<T>> cells;
+    std::unordered_map<T, std::set<T>> cells;
 
     int minSurvive = 2;
     int maxSurvive = 3;

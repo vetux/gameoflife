@@ -30,11 +30,6 @@ using namespace xengine;
 
 class GameOfLife : public Application {
 public:
-    enum ShadeMode {
-        SHADE_DEFAULT,
-        SHADE_SCALE_NEIGHBOUR, // Scale the color intensity with the number of neighbours of the cell,
-    };
-
     GameOfLife(int argc, char *argv[])
             : Application(argc, argv), ren2d(*renderDevice) {
         window->setTitle("Game Of Life");
@@ -57,7 +52,7 @@ protected:
             tickAccum += deltaTime;
         }
 
-        auto &target = window->getRenderTarget(graphicsBackend);
+        auto &target = window->getRenderTarget();
 
         renderDevice->getRenderer().renderClear(target, ColorRGBA::black(), 1);
 
@@ -82,7 +77,7 @@ private:
     Vec2i getMousePosition() {
         return screenToWorld(window->getInput().getMouse().position.convert<float>()
                              - Vec2f(cellSize + cellSpacing, cellSize + cellSpacing) * viewScale / 2,
-                             window->getRenderTarget(graphicsBackend).getSize().convert<float>());
+                             window->getRenderTarget().getSize().convert<float>());
     }
 
     std::vector<Vec2i> getBrushInfluence(Vec2i position) {
@@ -95,19 +90,17 @@ private:
         return ret;
     }
 
-    void drawTile(RenderTarget &target, Vec2i pos, ColorRGBA color, bool fillSpacing) {
-        Vec2f screenPos = worldToScreen(pos, target.getSize().convert<float>());
+    void drawTiles(RenderTarget &target, const std::vector<Vec2i> &positions, ColorRGBA color) {
+        std::vector<std::pair<Vec2f, float>> offsets;
+        offsets.reserve(positions.size());
 
-        auto size = cellSize * viewScale;
-
-        if (fillSpacing) {
-            screenPos -= Vec2f(cellSpacing, cellSpacing) / 2 * viewScale;
-            size += cellSpacing * viewScale;
+        for (auto &t: positions) {
+            auto screenPos = worldToScreen(t, target.getSize().convert<float>());
+            offsets.emplace_back(std::pair<Vec2f, float>(screenPos, 0));
         }
 
-        Rectf rect(screenPos, {size, size});
-
-        ren2d.draw(rect, color);
+        auto size = cellSize * viewScale;
+        ren2d.drawInstanced(offsets, {size, size}, color);
     }
 
     void drawCursor(RenderTarget &target) {
@@ -143,6 +136,7 @@ private:
         Vec2i min = screenToWorld({0, 0}, target.getSize().convert<float>());
         Vec2i max = screenToWorld(target.getSize().convert<float>(), target.getSize().convert<float>());
 
+        std::vector<Vec2i> positions;
         for (auto &x: grid.cells) {
             for (auto &y: x.second) {
                 if (x.first < min.x
@@ -150,30 +144,11 @@ private:
                     || y < min.y
                     || y > max.y)
                     continue;
-
-                Vec2i pos(x.first, y);
-
-                ColorRGBA color;
-                bool fill = false;
-
-                switch (mode) {
-                    case SHADE_SCALE_NEIGHBOUR: {
-                        float scale = 0.2f;
-                        auto n = grid.getNeighbours(pos);
-                        if (n > 0)
-                            scale = grid.getNeighbours(pos) / 10.0f;
-                        color = ColorRGBA::white(scale);
-                        fill = true;
-                    }
-                        break;
-                    default:
-                        color = ColorRGBA::white();
-                        break;
-                }
-
-                drawTile(target, pos, color, fill);
+                positions.emplace_back(Vec2i(x.first, y));
             }
         }
+
+        drawTiles(target, positions, ColorRGBA::white());
 
         ren2d.renderPresent();
     }
@@ -265,12 +240,6 @@ private:
 
         if (keyboard.getKeyDown(xengine::KEY_SPACE)) {
             keyboardBlockToggle = !keyboardBlockToggle;
-        }
-
-        if (keyboard.getKeyDown(KEY_1)) {
-            mode = SHADE_DEFAULT;
-        } else if (keyboard.getKeyDown(KEY_2)) {
-            mode = SHADE_SCALE_NEIGHBOUR;
         }
 
         if (keyboard.getKeyDown(KEY_R)) {
@@ -374,8 +343,6 @@ private:
     bool keyboardBlockToggle = false;
 
     Vec2i currentMousePosition;
-
-    ShadeMode mode = SHADE_DEFAULT;
 
     uint brushSize = 0;
 };
