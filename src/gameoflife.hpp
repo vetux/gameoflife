@@ -62,7 +62,8 @@ protected:
 
         auto &target = window->getRenderTarget();
 
-        renderDevice->getRenderer().renderClear(target, ColorRGBA::black(), 1);
+        ren2d.renderBegin(target);
+        ren2d.renderPresent();
 
         drawGrid(target);
         drawCursor(target);
@@ -85,7 +86,7 @@ private:
     Vec2i getMousePosition() {
         return screenToWorld(window->getInput().getMouse().position.convert<float>()
                              - Vec2f(cellSize + cellSpacing, cellSize + cellSpacing) * viewScale / 2,
-                             window->getRenderTarget().getSize().convert<float>());
+                             window->getRenderTarget().getDescription().size.convert<float>());
     }
 
     std::vector<Vec2i> getBrushInfluence(Vec2i position) {
@@ -103,7 +104,7 @@ private:
         offsets.reserve(positions.size());
 
         for (auto &t: positions) {
-            auto screenPos = worldToScreen(t, target.getSize().convert<float>());
+            auto screenPos = worldToScreen(t, target.getDescription().size.convert<float>());
             offsets.emplace_back(std::pair<Vec2f, float>(screenPos, 0));
         }
 
@@ -112,7 +113,7 @@ private:
     }
 
     void drawTile(RenderTarget &target, Vec2i pos, ColorRGBA color, bool fillSpacing) {
-        Vec2f screenPos = worldToScreen(pos, target.getSize().convert<float>());
+        Vec2f screenPos = worldToScreen(pos, target.getDescription().size.convert<float>());
 
         auto size = cellSize * viewScale;
 
@@ -133,7 +134,7 @@ private:
         auto influence = getBrushInfluence(mpos);
 
         for (auto &pos: influence) {
-            Vec2f screenPos = worldToScreen(pos, target.getSize().convert<float>());
+            Vec2f screenPos = worldToScreen(pos, target.getDescription().size.convert<float>());
 
             auto size = cellSize * viewScale;
 
@@ -156,8 +157,8 @@ private:
     void drawGrid(RenderTarget &target) {
         gridRenderer2d.renderBegin(target, false);
 
-        Vec2i min = screenToWorld({0, 0}, target.getSize().convert<float>());
-        Vec2i max = screenToWorld(target.getSize().convert<float>(), target.getSize().convert<float>());
+        Vec2i min = screenToWorld({0, 0}, target.getDescription().size.convert<float>());
+        Vec2i max = screenToWorld(target.getDescription().size.convert<float>(), target.getDescription().size.convert<float>());
 
         std::vector<Vec2i> positions;
         for (auto &x: grid.cells) {
@@ -215,39 +216,39 @@ private:
 
         ren2d.draw(deltaText,
                    Rectf({padding, padding},
-                         deltaText.getTexture().getAttributes().size.convert<float>()),
+                         deltaText.getTexture().getDescription().size.convert<float>()),
                    ColorRGBA::white());
         ren2d.draw(mtext,
                    Rectf({padding, padding
-                                   + deltaText.getTexture().getAttributes().size.y
+                                   + deltaText.getTexture().getDescription().size.y
                                    + padding},
-                         mtext.getTexture().getAttributes().size.convert<float>()),
+                         mtext.getTexture().getDescription().size.convert<float>()),
                    ColorRGBA::white());
         ren2d.draw(ttext,
                    Rectf({padding, padding
-                                   + deltaText.getTexture().getAttributes().size.y
+                                   + deltaText.getTexture().getDescription().size.y
                                    + padding
-                                   + mtext.getTexture().getAttributes().size.y
+                                   + mtext.getTexture().getDescription().size.y
                                    + padding},
-                         ttext.getTexture().getAttributes().size.convert<float>()),
+                         ttext.getTexture().getDescription().size.convert<float>()),
                    ColorRGBA::white());
 
         ren2d.draw(text,
                    Rectf({padding, padding
-                                   + deltaText.getTexture().getAttributes().size.y
+                                   + deltaText.getTexture().getDescription().size.y
                                    + padding
-                                   + mtext.getTexture().getAttributes().size.y
+                                   + mtext.getTexture().getDescription().size.y
                                    + padding
-                                   + ttext.getTexture().getAttributes().size.y
+                                   + ttext.getTexture().getDescription().size.y
                                    + padding},
-                         text.getTexture().getAttributes().size.convert<float>()),
+                         text.getTexture().getDescription().size.convert<float>()),
                    ColorRGBA::white());
 
         if (blockTick) {
             ren2d.draw(btext,
-                       Rectf({(target.getSize().convert<float>() / 2.0f) -
-                              (btext.getTexture().getAttributes().size.convert<float>() / 2.0f)},
-                             btext.getTexture().getAttributes().size.convert<float>()),
+                       Rectf({(target.getDescription().size.convert<float>() / 2.0f) -
+                              (btext.getTexture().getDescription().size.convert<float>() / 2.0f)},
+                             btext.getTexture().getDescription().size.convert<float>()),
                        ColorRGBA::white());
         }
 
