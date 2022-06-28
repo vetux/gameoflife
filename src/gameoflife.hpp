@@ -99,7 +99,7 @@ private:
         return ret;
     }
 
-    void drawTiles(RenderTarget &target, const std::vector<Vec2i> &positions, ColorRGBA color) {
+    void drawTiles(Renderer2D& ren, RenderTarget &target, const std::vector<Vec2i> &positions, ColorRGBA color) {
         std::vector<std::pair<Vec2f, float>> offsets;
         offsets.reserve(positions.size());
 
@@ -109,10 +109,10 @@ private:
         }
 
         auto size = cellSize * viewScale;
-        ren2d.drawInstanced(offsets, {size, size}, color);
+        ren.drawInstanced(offsets, {size, size}, color);
     }
 
-    void drawTile(RenderTarget &target, Vec2i pos, ColorRGBA color, bool fillSpacing) {
+    void drawTile(Renderer2D& ren, RenderTarget &target, Vec2i pos, ColorRGBA color, bool fillSpacing) {
         Vec2f screenPos = worldToScreen(pos, target.getDescription().size.convert<float>());
 
         auto size = cellSize * viewScale;
@@ -124,7 +124,7 @@ private:
 
         Rectf rect(screenPos, {size, size});
 
-        ren2d.draw(rect, color);
+        ren.draw(rect, color);
     }
 
     void drawCursor(RenderTarget &target) {
@@ -155,10 +155,9 @@ private:
     }
 
     void drawGrid(RenderTarget &target) {
-        gridRenderer2d.renderBegin(target, false);
-
         Vec2i min = screenToWorld({0, 0}, target.getDescription().size.convert<float>());
-        Vec2i max = screenToWorld(target.getDescription().size.convert<float>(), target.getDescription().size.convert<float>());
+        Vec2i max = screenToWorld(target.getDescription().size.convert<float>(),
+                                  target.getDescription().size.convert<float>());
 
         std::vector<Vec2i> positions;
         for (auto &x: grid.cells) {
@@ -172,23 +171,25 @@ private:
             }
         }
 
-        switch (mode) {
-            case SHADE_SCALE_NEIGHBOUR:
-                for (auto &p: positions) {
-                    auto n = grid.getNeighbours(p);
-                    float scale = 0.2f;
-                    if (n > 0)
-                        scale = (float) n / 10.0f;
-                    drawTile(target, p, ColorRGBA::white(scale), true);
-                }
-                break;
-            case SHADE_DEFAULT:
-            default:
-                drawTiles(target, positions, ColorRGBA::white());
-                break;
+        if (!positions.empty()) {
+            gridRenderer2d.renderBegin(target, false);
+            switch (mode) {
+                case SHADE_SCALE_NEIGHBOUR:
+                    for (auto &p: positions) {
+                        auto n = grid.getNeighbours(p);
+                        float scale = 0.2f;
+                        if (n > 0)
+                            scale = (float) n / 10.0f;
+                        drawTile(gridRenderer2d, target, p, ColorRGBA::white(scale), true);
+                    }
+                    break;
+                case SHADE_DEFAULT:
+                default:
+                    drawTiles(gridRenderer2d, target, positions, ColorRGBA::white());
+                    break;
+            }
+            gridRenderer2d.renderPresent();
         }
-
-        gridRenderer2d.renderPresent();
     }
 
     void drawGui(RenderTarget &target, float deltaTime) {
