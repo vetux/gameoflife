@@ -200,7 +200,9 @@ private:
 
         font->setPixelSize({0, 50});
 
-        auto deltaText = textRenderer->render("Delta Time: " + std::to_string(deltaTime), 30);
+        auto fps = 1 / deltaTime;
+
+        auto deltaText = textRenderer->render(std::to_string(deltaTime) + " sec / " + std::to_string(fps) + " fps", 30);
         auto text = textRenderer->render("Alive cells: " + std::to_string(cellCount), 30);
 
         auto mpos = getMousePosition();
