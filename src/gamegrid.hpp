@@ -31,7 +31,7 @@
  */
 template<typename T>
 struct GameGrid {
-    typedef xengine::Vector2<T> Position;
+    typedef xng::Vector2<T> Position;
 
     std::unordered_map<T, std::unordered_set<T>> cells;
 

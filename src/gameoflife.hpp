@@ -26,7 +26,7 @@
 
 #include "gamegrid.hpp"
 
-using namespace xengine;
+using namespace xng;
 
 class GameOfLife : public Application {
 public:
@@ -144,7 +144,7 @@ private:
             Rectf rect(screenPos, {size, size});
 
             ColorRGBA color;
-            if (window->getInput().getKeyboard().getKey(xengine::KEY_LCTRL))
+            if (window->getInput().getKeyboard().getKey(xng::KEY_LCTRL))
                 color = ColorRGBA::red();
             else
                 color = ColorRGBA::green();
@@ -262,24 +262,24 @@ private:
         auto &input = window->getInput();
         auto &keyboard = input.getKeyboard();
 
-        if (keyboard.getKey(xengine::KEY_LEFT)
+        if (keyboard.getKey(KEY_LEFT)
             || keyboard.getKey(KEY_A)) {
             viewPos.x -= deltaTime * panSpeed;
         }
-        if (keyboard.getKey(xengine::KEY_RIGHT)
+        if (keyboard.getKey(KEY_RIGHT)
             || keyboard.getKey(KEY_D)) {
             viewPos.x += deltaTime * panSpeed;
         }
-        if (keyboard.getKey(xengine::KEY_UP)
+        if (keyboard.getKey(KEY_UP)
             || keyboard.getKey(KEY_W)) {
             viewPos.y -= deltaTime * panSpeed;
         }
-        if (keyboard.getKey(xengine::KEY_DOWN)
-            || keyboard.getKey(xengine::KEY_S)) {
+        if (keyboard.getKey(KEY_DOWN)
+            || keyboard.getKey(KEY_S)) {
             viewPos.y += deltaTime * panSpeed;
         }
 
-        if (keyboard.getKeyDown(xengine::KEY_SPACE)) {
+        if (keyboard.getKeyDown(KEY_SPACE)) {
             keyboardBlockToggle = !keyboardBlockToggle;
         }
 
@@ -308,11 +308,11 @@ private:
 
         auto &mouse = input.getMouse();
 
-        if (mouse.getButton(xengine::RIGHT)) {
+        if (mouse.getButton(RIGHT)) {
             viewPos += mouse.positionDelta.convert<float>() * deltaTime * panSpeed;
         }
 
-        if (keyboard.getKey(xengine::KEY_LSHIFT)) {
+        if (keyboard.getKey(KEY_LSHIFT)) {
             if (mouse.wheelDelta > 0) {
                 brushSize++;
             } else if (mouse.wheelDelta < 0) {
@@ -326,7 +326,7 @@ private:
                 viewScale = 0.01;
         }
 
-        if (mouse.getButton(xengine::LEFT)) {
+        if (mouse.getButton(LEFT)) {
             // Block the grid from ticking if left mouse button is held down or pressed
             blockTick = true;
             tickAccum = 0;
@@ -341,14 +341,14 @@ private:
             }
 
             // Set cell if left mouse button was pressed or if the mouse was moved while the left mouse button was held down
-            if (mouse.getButtonDown(xengine::LEFT) || updateGrid) {
+            if (mouse.getButtonDown(LEFT) || updateGrid) {
                 currentMousePosition = getMousePosition();
 
                 auto mpos = getMousePosition();
                 auto influence = getBrushInfluence(mpos);
 
                 for (auto &pos: influence) {
-                    if (keyboard.getKey(xengine::KEY_LCTRL)) {
+                    if (keyboard.getKey(KEY_LCTRL)) {
                         grid.setCell(pos, false);
                     } else if (updateGrid) {
                         // Set cells to alive if the user is pressing left button and dragging the mouse
