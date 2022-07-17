@@ -43,11 +43,12 @@ public:
 protected:
     void start() override {
         std::ifstream stream("asset/Roboto-Regular.ttf");
-        font = Font::createFont(stream);
+        fontDriver = DriverRegistry::load<FontDriver>("freetype");
+        font = fontDriver->createFont(stream);
         textRenderer = std::make_unique<TextRenderer>(*font, *renderDevice);
     }
 
-    void update(float deltaTime) override {
+    void update(DeltaTime deltaTime) override {
         updateInput(deltaTime);
 
         if (tickAccum + deltaTime >= tickDuration && !blockTick) {
@@ -99,7 +100,7 @@ private:
         return ret;
     }
 
-    void drawTiles(Renderer2D& ren, RenderTarget &target, const std::vector<Vec2i> &positions, ColorRGBA color) {
+    void drawTiles(Renderer2D &ren, RenderTarget &target, const std::vector<Vec2i> &positions, ColorRGBA color) {
         std::vector<std::pair<Vec2f, float>> offsets;
         offsets.reserve(positions.size());
 
@@ -112,7 +113,7 @@ private:
         ren.drawInstanced(offsets, {size, size}, color);
     }
 
-    void drawTile(Renderer2D& ren, RenderTarget &target, Vec2i pos, ColorRGBA color, bool fillSpacing) {
+    void drawTile(Renderer2D &ren, RenderTarget &target, Vec2i pos, ColorRGBA color, bool fillSpacing) {
         Vec2f screenPos = worldToScreen(pos, target.getDescription().size.convert<float>());
 
         auto size = cellSize * viewScale;
@@ -369,6 +370,7 @@ private:
     Renderer2D ren2d;
     Renderer2D gridRenderer2d;
 
+    std::unique_ptr<FontDriver> fontDriver;
     std::unique_ptr<Font> font;
     std::unique_ptr<TextRenderer> textRenderer;
 
