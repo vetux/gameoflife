@@ -36,7 +36,11 @@ public:
     };
 
     GameOfLife(int argc, char *argv[])
-            : Application(argc, argv), ren2d(*renderDevice), gridRenderer2d(*renderDevice) {
+            : Application(argc, argv),
+              shaderCompiler(DriverRegistry::load<SPIRVCompiler>("shaderc")),
+              shaderDecompiler(DriverRegistry::load<SPIRVDecompiler>("spirv-cross")),
+              ren2d(*renderDevice, *shaderCompiler, *shaderDecompiler),
+              gridRenderer2d(*renderDevice, *shaderCompiler, *shaderDecompiler) {
         window->setTitle("Game Of Life");
     }
 
@@ -45,7 +49,7 @@ protected:
         std::ifstream stream("asset/Roboto-Regular.ttf");
         fontDriver = DriverRegistry::load<FontDriver>("freetype");
         font = fontDriver->createFont(stream);
-        textRenderer = std::make_unique<TextRenderer>(*font, *renderDevice);
+        textRenderer = std::make_unique<TextRenderer>(*font, ren2d);
     }
 
     void update(DeltaTime deltaTime) override {
@@ -366,6 +370,9 @@ private:
         if (keyboardBlockToggle)
             blockTick = true;
     }
+
+    std::unique_ptr<SPIRVCompiler> shaderCompiler;
+    std::unique_ptr<SPIRVDecompiler> shaderDecompiler;
 
     Renderer2D ren2d;
     Renderer2D gridRenderer2d;
